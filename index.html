@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Neon</title>
+  <style>
+    body { padding: 20px; }
+    .neon {
+      position: relative;
+      width: 20px;
+      height: 20px;
+    }
+    .bulb {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: #000;
+      border-radius: 50%;
+      transition: transform 2s;
+      animation: blink_1 1s linear 0s infinite;
+    }
+
+    .bulb:nth-child(2n) {
+      animation-name: blink_2;
+    }
+
+    .bulb:nth-child(3n) {
+      animation-name: blink_3;
+    }
+
+    @keyframes blink_1 {
+      0%   {background-color: red;}
+      32%  {background-color: red;}
+      33%  {background-color: blue;}
+      66% {background-color: blue;}
+      67% {background-color: yellow;}
+      100% {background-color: yellow;}
+    }
+
+     @keyframes blink_2 {
+      0%   {background-color: blue;}
+      32%  {background-color: blue;}
+      33%  {background-color: yellow;}
+      66% {background-color: yellow;}
+      67% {background-color: red;}
+      100% {background-color: red;}
+    }
+
+    @keyframes blink_3 {
+      0%   {background-color: yellow;}
+      32%  {background-color: yellow;}
+      33%  {background-color: red;}
+      66% {background-color: red;}
+      67% {background-color: blue;}
+      100% {background-color: blue;}
+    }
+  </style>
+</head>
+<body>
+
+  <div id="root"></div>
+  <button id="switchShape">Switch shape</button>
+<script>
+(function(){
+  
+  const state = {
+    bulbsNum: 27,
+    currentShapeCircle: false,
+    circleRadius: 200,
+    rectangleWidth: 300,
+    rectangleHeight: 200,
+  };
+
+  const app = document.getElementById('root');
+  const neon = document.createElement('div');
+  const switchShapeBtn = document.getElementById('switchShape');
+  const bulbs = [];
+
+  for (let i = 0; i < state.bulbsNum; i++){
+    const bulb = document.createElement('div');
+    bulb.classList.add('bulb');
+    bulb.id = 'bulb_' + i;
+    bulbs.push(bulb);
+  }
+
+  bulbs.forEach(bulb => {
+    neon.append(bulb);
+  })
+
+  neon.classList.add('neon');
+  neon.style.margin = Math.max(
+                        state.circleRadius,
+                        state.rectangleHeight/2,
+                        state.rectangleWidth/2) + 'px';
+
+  app.append(neon);
+
+  // Set event listeners
+  switchShapeBtn.addEventListener('click', () => {
+    if (state.currentShapeCircle) {
+      setSquareShape(bulbs, state.rectangleWidth, state.rectangleHeight);
+      state.currentShapeCircle = false;
+    } else {
+      setCircleShape(bulbs, state.circleRadius);
+      state.currentShapeCircle = true;
+    }
+  });
+
+  // Run initial drawing
+  setSquareShape(bulbs, state.rectangleWidth, state.rectangleHeight);
+
+// ========== Methods
+  // Shapes
+  function setCircleShape(bulbs, circleRadius) {
+    const rotationAngle = 360 / bulbs.length;
+    let currentAngle = 0;
+
+    for (bulb of bulbs) {
+      const angleInRadians = currentAngle * Math.PI / 180;
+      const x = circleRadius * Math.cos(angleInRadians);
+      const y = circleRadius * Math.sin(angleInRadians);
+
+      bulb.style.transform = `translate(${x}px, ${y}px)`;
+
+      currentAngle += rotationAngle;
+    }
+  }
+  function setSquareShape(bulbs, width, height) {
+    const P = (width + height) * 2;
+    const step = P / bulbs.length;
+    const generator = generateCoordinates(width, height, step);
+    let coordinates = generator.next().value;
+
+    for (bulb of bulbs) {
+      if (coordinates.length) {
+        let [x, y] = coordinates.shift();
+        bulb.style.transform = `translate(${x}px, ${y}px)`;
+      } else {
+        coordinates = generator.next().value;
+        let [x, y] = coordinates.shift();
+        bulb.style.transform = `translate(${x}px, ${y}px)`;
+      }
+    }
+  }
+
+  // Generate coordinates for drawing rectangular shape
+  function* generateCoordinates(width, height, step) {
+    let x = width/2;
+    let y = 0;
+    let coordinates = [];
+
+    // First half of the first quarter (right side quarter)
+    while (y <= height/2) {
+      coordinates.push([x, y]);
+      y += step;
+    }
+    yield coordinates;
+    
+    // Second quarter (bottom side)
+    coordinates = [];
+    x = width/2 - y + height/2;
+    y = height/2;
+    while (x >= -(width/2)) {
+      coordinates.push([x, y]);
+      x -= step;
+    }
+    yield coordinates;
+
+    // Third quarter (left side)
+    coordinates = [];
+    y = height/2 + x + width/2;
+    x = -width/2;
+    while (y >= -(height/2)) {
+      coordinates.push([x, y]);
+      y -= step;
+    }
+    yield coordinates;
+
+    // Fourth quarter (top side)
+    coordinates = [];
+    x = -width/2 - y - height/2;
+    y = -height/2;
+    while (x <= width/2) {
+      coordinates.push([x, y]);
+      x += step;
+    }
+    yield coordinates;
+
+    // Second part of the first quarter (right side)
+    coordinates = [];
+    y = -height/2 + x - width/2;
+    x = width/2;
+    while (y <= height/2) {
+      coordinates.push([x, y]);
+      y += step;
+    }
+    return coordinates;
+  }
+
+})();
+</script>
+
+</body>
+</html>
