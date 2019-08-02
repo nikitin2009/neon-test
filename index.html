@@ -134,14 +134,11 @@
     let coordinates = generator.next().value;
 
     for (bulb of bulbs) {
-      if (coordinates.length) {
-        let [x, y] = coordinates.shift();
-        bulb.style.transform = `translate(${x}px, ${y}px)`;
-      } else {
+      if (!coordinates.length) {
         coordinates = generator.next().value;
-        let [x, y] = coordinates.shift();
-        bulb.style.transform = `translate(${x}px, ${y}px)`;
       }
+      let [x, y] = coordinates.shift();
+      bulb.style.transform = `translate(${x}px, ${y}px)`;
     }
   }
 
